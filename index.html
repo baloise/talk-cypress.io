@@ -1,0 +1,256 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>CI / CD with JavaScript</title>
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/baloise.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/atom-one-dark.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+        document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section class="deck-slide" data-background="img/basel2.jpg">
+            <h5><span class="header">06.12.2018</span></h5>
+            <h1><span class="image-heading">E2E Testing with cypress</span></h1>
+            <h2><span class="sub-header">Joachim Prinzbach & Marco Zirkenbach</span></h2>
+        </section>
+
+
+        <section data-background="#E5F3F9">
+            <h2>Agenda</h2>
+            <ul>
+                <li>Intro</li>
+                <li>CI/CD concepts in detail</li>
+                <ul>
+                    <li>#1 Versioning</li>
+                    <li>#2 Releasing, tagging and publishing</li>
+                    <li>#3 Self contained builds</li>
+                    <li>#4 Standardized process</li>
+                </ul>
+                <li>Live demo</li>
+                <li>Wrap Up</li>
+            </ul>
+        </section>
+
+
+        <section>
+            <section data-background="img/spencer-watson-382879-unsplash.jpg">
+                <h2><span class="image-heading">What is cypress?</span></h2>
+            </section>
+
+            <section>
+                <h3>cypress.io</h3>
+                <ul>
+                    <li>a tool to test browser based applications</li>
+                    <li>developed and maintained by cypress.io - currently about 13 employees</li>
+                    <li>and... by the open source community</li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>package.json example</h3>
+                <pre>
+                    <code class="hljs json" data-trim contenteditable>
+                        {
+                          "name": "talk-cicd-javascript",
+                          "version": "0.1.0",
+                          "description": "talk about CICD with JS",
+                          "dependencies": {
+                            "express": "4.15.2",
+                            "socket.io": "1.7.3"
+                          },
+                          "license": "MIT"
+                        }
+                    </code>
+                </pre>
+            </section>
+        </section>
+
+
+        <section>
+            <section data-background="img/todd-quackenbush-701-unsplash.jpg">
+                <h2><span class="image-heading">Why another tool?</span></h2>
+            </section>
+
+            <section>
+                <h3>Advantages of cypress</h3>
+                <ul>
+                    <li>no <a href="https://github.com/cypress-io/cypress/blob/develop/LICENSE.md">licence</a> costs (MIT): <a href="https://github.com/cypress-io/cypress">open source</a></li>
+                    <li>great community (9000 stars, 78 contributors)</li>
+                    <li>extremely robust: no need for waits, scrollIntoView, check for visbility, existence... </li>
+                    <li>very fast test execution (in headless mode)</li>
+                </ul>
+            </section>
+
+            <section data-background="#FFFFFF">
+                <h3>Advantages of cypress (2)</h3>
+                <h4>Great testrunner</h4>
+                <img style="width: 75%" src="img/testrunner.png" alt="">
+            </section>
+
+            <section>
+                <h3>Advantages of cypress (3)</h3>
+                <ul>
+                    <li>testrunner is awesome for finding selectors, debugging, time travelling or simply watching your tests run</li>
+                    <li>cypress is independent from any web frameworks -> works with every webapp</li>
+                    <li><a href="https://docs.cypress.io/guides/guides/screenshots-and-videos.html#Screenshots">can create screenshots or videos</a></li>
+                    <li><a href="https://docs.cypress.io/guides/guides/continuous-integration.html#What-is-supported">runs on ci</a></li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>Advantages of cypress (4)</h3>
+                <h4>Stubbing network requests</h4>
+                <pre>
+                    <code class="hljs typescript" data-trim contenteditable>
+                        cy.server();
+                        cy.route({
+                            method: 'GET',
+                            url: '/api/message/**',
+                            status: 404,
+                            response: {}
+                        });
+                        cy.get('#openMessage').click();
+                        cy.get('#notFoundErrorToast').should('exist');
+
+                        cy.server({enable: false});
+                        cy.get('#openMessage').click();
+                        cy.get('#notFoundErrorToast').should('not.exist');
+                    </code>
+                </pre>
+            </section>
+
+            <section>
+                <h3>Advantages of cypress (5)</h3>
+                <h4>Easy to write tests, in JavaScript or TypeScript</h4>
+                <pre>
+                    <code class="hljs typescript" data-trim contenteditable>
+                        describe('the login', () => {
+                            it('should work for a dummy user', () => {
+                                cy.visit('myUrl');
+                                cy.get('#uNameInput').type('dummy');
+                                cy.get('#pwInput').type('dummyPw');
+                                cy.get('#btnSubmit').click();
+                                cy.get('#customerMenu').click();
+                            });
+                        });
+                    </code>
+                </pre>
+            </section>
+
+            <section>
+                <h3>Usage of page object pattern</h3>
+                <pre>
+                    <code class="hljs typescript" data-trim contenteditable>
+                        it('should go through in german', () => {
+                            const firstPage = app.start()
+                                .validateInfotext()
+                                .clickNext()
+                                .validateRequiredValildationsWorking()
+                                .fillRestOfForm();
+
+                            const secondPage = firstPage.proceedToNextPage()
+                                .clickNext()
+                                .validateRequiredErrors()
+                                .enterStreetAndNumber()
+                                .enterEmail()
+                                .enterPhoneNumber();
+                        });
+                    </code>
+                </pre>
+            </section>
+        </section>
+
+
+        <section>
+            <section data-background="img/alex-140654-unsplash.jpg">
+                <h2><span class="image-heading">Drawbacks / Trade-offs</span></h2>
+            </section>
+
+            <section>
+                <h3>Browser and CI support</h3>
+                <ul>
+                    <li>Currently only chromium based browsers are supported - others are <a href="https://github.com/cypress-io/cypress/issues/310">in progress</a></li>
+                    <li>needs <a href="https://docs.cypress.io/guides/guides/continuous-integration.html#Dependencies">some packages</a> to run in linux nodes</li>
+                    <li>there won't be a support for <a href="https://docs.cypress.io/guides/references/trade-offs.html#Multiple-tabs">multiple tabs</a></li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>What cypress is not designed for</h3>
+                <ul>
+                    <li>performance testing</li>
+                    <li>testing 3rd party sites that you do not control</li>
+                    <li>indexing the web -> crawling</li>
+                    <li>Testing non browser based apps</li>
+                </ul>
+            </section>
+        </section>
+
+
+        <section>
+            <section data-background="img/richard-lee-788052-unsplash.jpg">
+                <h2><span class="image-heading">Selenium vs. Cypress</span></h2>
+            </section>
+
+            <section>
+                <h2>Daniel N: <span style="font-style: italic">"Selenium by itself is pretty dumb - you need to write waits"</span></h2>
+            </section>
+
+            <section></section>
+        </section>
+
+
+        <section>
+            <section data-background="img/danny-howe-762860-unsplash.jpg">
+                <h2><span class="image-heading">Live Demo</span></h2>
+            </section>
+        </section>
+
+
+        <section class="deck-slide" data-background="img/basel1.jpg">
+            <h1><span class="image-heading questions">Any questions?</span></h1>
+            <h2 class="major"><span class="sub-header">Find the slides: <a href="http://bit.ly/cypress-images">http://bit.ly/cypress-images</a></span></h2>
+            <h2 class="minor"><span class="sub-header">Images from Unsplash: <a href="http://bit.ly/cicd-js-images">http://bit.ly/cicd-js-images</a></span></h2>
+        </section>
+    </div>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.js"></script>
+
+<script>
+    // More info https://github.com/hakimel/reveal.js#configuration
+    Reveal.initialize({
+        history: true,
+
+        // More info https://github.com/hakimel/reveal.js#dependencies
+        dependencies: [
+            {src: 'plugin/markdown/marked.js'},
+            {src: 'plugin/markdown/markdown.js'},
+            {src: 'plugin/notes/notes.js', async: true},
+            {
+                src: 'plugin/highlight/highlight.js', async: true, callback: function () {
+                    hljs.initHighlightingOnLoad();
+                }
+            }
+        ]
+    });
+</script>
+</body>
+</html>
